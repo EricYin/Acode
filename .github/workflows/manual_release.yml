@@ -1,0 +1,84 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: EricYin/acode/.github/workflows/nightly-build.yml@main
+    permissions:
+      contents: read
+      pull-requests: read
+    secrets:
+      KEYSTORE_CONTENT: ${{ secrets.KEYSTORE_CONTENT }}
+      BUILD_JSON_CONTENT: ${{ secrets.BUILD_JSON_CONTENT }}
+    with:
+      is_PR: false
+      is_trusted_pr: false
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ needs.build.result == 'success' }}
+    permissions:
+      contents: write
+      id-token: write
+
+    outputs:
+      release_output_url: ${{ steps.gh_release.outputs.url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # Required for tags
+          persist-credentials: true
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4.1.2
+
+      - name: Set Publish Metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "ARTIFACTS_DIR=${{ env.ARTIFACTS_DIR}}" >> $GITHUB_ENV
+          echo "NORMAL_ARTIFACT_NAME=app-debug-${{ github.sha }}" >> $GITHUB_ENV
+        env:
+          ARTIFACTS_DIR: ${{ runner.temp }}/artifacts
+
+      - name: Download normal APK artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.build.outputs.normal_artifact_name }}
+          path: ${{ env.ARTIFACTS_DIR }}/normal
+
+      - name: Create nightly prerelease
+        id: gh_release
+        uses: softprops/action-gh-release@v3
+        env:
+            FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+        with:
+          prerelease: true
+          tag_name: ${{ needs.build.outputs.updated_version }}
+          name: ${{ needs.build.outputs.updated_version }}
+          files: |
+            ${{ env.ARTIFACTS_DIR }}/normal/*normal*.apk
+          body: |
+            Manual Release
+
+      - name: Post Job summary
+        if: always()
+        run: |
+          echo "| Variable | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| release_output_url | ${{ steps.gh_release.outputs.url || 'N/A' }} |" >> "$GITHUB_STEP_SUMMARY"
+    
+ 
+  
