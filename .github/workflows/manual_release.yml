@@ -60,7 +60,7 @@ jobs:
         run: |
           GIT_COMMIT="$(git rev-parse HEAD)"
           echo "git_commit=$GIT_COMMIT" >> "$GITHUB_OUTPUT"
-          echo "normal_artifact_name=app-$GIT_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "normal_artifact_name=app-$GIT_COMMIT.apk" >> "$GITHUB_OUTPUT"
 
       - name: Extract base version
         id: base
@@ -136,7 +136,7 @@ jobs:
           tag_name: ${{ steps.version.outputs.updated_version }}
           name: ${{ steps.version.outputs.updated_version }}
           files: |
-            ${{ steps.meta.outputs.normal_artifact_name }}
+            ${{ env.NORMAL_APK_PATH }}
           body: |
             ${{ steps.summary.outputs.build_summary }}
 
