@@ -13,7 +13,7 @@ concurrency:
 env:
   STORE_FILE_PATH: /tmp/app-release.keystore
   BUILD_JSON_PATH: build.json
-  VERSION_LABEL: ${{ 'manual' }}
+  VERSION_LABEL: ${{ 'acode' }}
   
 jobs: 
   release:
@@ -60,8 +60,9 @@ jobs:
         run: |
           GIT_COMMIT="$(git rev-parse HEAD)"
           echo "git_commit=$GIT_COMMIT" >> "$GITHUB_OUTPUT"
-          echo "normal_artifact_name=app-$GIT_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "normal_artifact_name=app-normal-$GIT_COMMIT" >> "$GITHUB_OUTPUT"
           echo "fdroid_artifact_name=app-fdroid-$GIT_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "FILE_DATE=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
 
       - name: Extract base version
         id: base
@@ -152,8 +153,8 @@ jobs:
             FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with:
           prerelease: true
-          tag_name: ${{ steps.version.outputs.updated_version }}
-          name: ${{ steps.version.outputs.updated_version }}
+          tag_name: ${{ env.FILE_DATE }}-${{ steps.version.outputs.updated_version }}
+          name: ${{ env.FILE_DATE }}-${{ steps.version.outputs.updated_version }}
           files: |
             ${{ env.NORMAL_APK_PATH }}
             ${{ env.FDROID_APK_PATH }}
