@@ -16,7 +16,7 @@ env:
   VERSION_LABEL: ${{ 'acode' }}
   
 jobs: 
-  release:
+  build_release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
