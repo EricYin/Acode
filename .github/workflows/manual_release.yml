@@ -13,7 +13,7 @@ concurrency:
 env:
   STORE_FILE_PATH: /tmp/app-release.keystore
   BUILD_JSON_PATH: build.json
-  VERSION_LABEL: ${{ 'acode' }}
+  VERSION_LABEL: ${{ 'm' }}
   
 jobs: 
   build_release:
