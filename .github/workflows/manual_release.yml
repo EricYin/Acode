@@ -26,6 +26,13 @@ jobs:
       release_output_url: ${{ steps.gh_release.outputs.url }}
 
     steps:
+      - name: Validate required secrets (Fast Fail If missing on nightly builds)
+        env:
+          KEYSTORE_CONTENT: ${{ secrets.KEYSTORE_CONTENT }}
+          BUILD_JSON_CONTENT: ${{ secrets.BUILD_JSON_CONTENT }}
+        run: |
+          [ -n "$KEYSTORE_CONTENT" ] && [ -n "$BUILD_JSON_CONTENT" ] || { echo "::error title=Missing secrets::KEYSTORE_CONTENT or BUILD_JSON_CONTENT is missing"; exit 1; }
+          
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
